@@ -27,7 +27,9 @@ export const createNote = mutation({
     if (board.ownerId !== user._id && (!board.isShared || board.inTrash)) {
       throw new Error("Access denied");
     }
-    const noteId = await ctx.db.insert("notes", args);
+    // Extraer solo los campos de la nota, excluyendo token
+    const { token, ...noteData } = args;
+    const noteId = await ctx.db.insert("notes", noteData);
     await ctx.runMutation(internal.boards.updateNotesCount, { boardId: args.boardId, increment: 1 });
     await ctx.db.patch(args.boardId, { lastModified: Date.now() });
     return noteId;
