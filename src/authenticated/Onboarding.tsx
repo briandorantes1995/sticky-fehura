@@ -1,29 +1,17 @@
 import React, { useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { useNavigate } from 'react-router-dom';
 import Logo from '../components/logo';
+import { useConvexAuth } from '../hooks/useConvexAuth';
 
 const Onboarding: React.FC = () => {
-    const { user } = useUser();
+    const { isAuthenticated } = useConvexAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-    const searchParams = new URLSearchParams(location.search);
-    const selectedPlan = searchParams.get('plan') || 'free';
-
-    const storePlan = useMutation(api.users.storePlan);
 
     useEffect(() => {
-        const saveUserPlan = async () => {
-            if (user) {
-                await storePlan({ plan: selectedPlan });
-                navigate('/boards');
-            }
-        };
-
-        saveUserPlan();
-    }, [user, selectedPlan, storePlan, navigate]);
+        if (isAuthenticated) {
+            navigate('/boards', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#121212]">

@@ -5,13 +5,6 @@ import { useHalloween } from '../../providers/halloween-provider';
 const Preview: React.FC = () => {
     const { isHalloweenMode } = useHalloween();
 
-    const scrollToSection = (id: string) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
     return (
         <section className="px-4 -mt-20 sm:-mt-24 md:-mt-28 lg:-mt-32">
             <div className="relative w-full min-h-[60vh] overflow-hidden rounded-3xl">
@@ -35,7 +28,7 @@ const Preview: React.FC = () => {
                             {isHalloweenMode ? 'Who needs a memory when you have ghostly notes?' : 'Who needs a photographic memory?'}
                         </p>
                         <Button
-                            onClick={() => scrollToSection('pricing')}
+                            onClick={() => window.location.href = '/signin'}
                             className={`text-base sm:text-lg lg:text-xl px-4 sm:px-6 lg:px-8 py-2 sm:py-3
                                 ${isHalloweenMode ? 'bg-halloween-orange hover:bg-halloween-purple text-white' : ''}`}
                         >

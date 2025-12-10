@@ -36,13 +36,6 @@ const NavBar = () => {
                     <button
                         className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
                             }`}
-                        onClick={() => scrollToSection('pricing')}
-                    >
-                        {isHalloweenMode ? 'Cursed Plans' : 'Pricing'}
-                    </button>
-                    <button
-                        className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
-                            }`}
                         onClick={() => scrollToSection('faq')}
                     >
                         {isHalloweenMode ? 'Dark Secrets' : 'FAQ'}
@@ -78,13 +71,6 @@ const NavBar = () => {
                         : 'bg-white dark:bg-secondaryBlack border-border dark:border-darkBorder'
                     }`}>
                     <div className="flex flex-col items-center py-4 space-y-4">
-                        <button
-                            className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
-                                }`}
-                            onClick={() => scrollToSection('pricing')}
-                        >
-                            {isHalloweenMode ? 'Cursed Plans' : 'Pricing'}
-                        </button>
                         <button
                             className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
                                 }`}

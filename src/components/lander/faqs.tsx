@@ -16,7 +16,7 @@ const FAQSection: React.FC = () => {
         },
         {
             question: "Is there a cursed free version?",
-            answer: "Indeed! Our Spectral Starter plan includes haunted notes, spirit synchronization, and ouija board support. For more dark powers, venture into our Phantom Pro plan."
+            answer: "Indeed! Sticky is free to use with all features available. No dark powers required!"
         },
         {
             question: "Can I conjure Sticky across different vessels?",
@@ -37,7 +37,7 @@ const FAQSection: React.FC = () => {
         },
         {
             question: "Is there a free version of Sticky?",
-            answer: "Yes! We offer a free Sticky Starter plan that includes 50 sticky notes, cloud sync, and email support. For more features, check out our Sticky Pro plan."
+            answer: "Yes! Sticky is completely free to use with all features available."
         },
         {
             question: "Can I use Sticky on multiple devices?",

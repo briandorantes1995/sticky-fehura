@@ -1,20 +1,14 @@
 import { mutation } from './_generated/server'
 import { v } from 'convex/values'
+import { getAuthenticatedUserFromMutation } from './authHelpers'
 
 export const supportRequest = mutation({
-  args: { input: v.string() },
+  args: { 
+    token: v.string(),
+    input: v.string() 
+  },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromMutation(ctx, args.token);
     await ctx.db.insert('supportRequest', {
       userId: user._id,
       input: args.input,

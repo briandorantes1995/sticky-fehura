@@ -7,13 +7,6 @@ import { useHalloween } from '../../providers/halloween-provider';
 const HeroSection: React.FC = () => {
     const { isHalloweenMode } = useHalloween();
 
-    const scrollToSection = (id: string) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
     const features = isHalloweenMode 
         ? ['Haunt your ideas', 'Spooky organization', 'Ghostly collaboration']
         : ['Capture ideas', 'Organize effortlessly', 'Collaborate in real-time'];
@@ -54,7 +47,7 @@ const HeroSection: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-center justify-center gap-4">
                         <Button 
-                            onClick={() => scrollToSection('pricing')} 
+                            onClick={() => window.location.href = '/signin'} 
                             className={`text-xl sm:text-2xl px-8 sm:px-10 py-4 sm:py-5
                                 ${isHalloweenMode ? 'bg-halloween-orange hover:bg-halloween-purple text-white' : ''}`}
                         >

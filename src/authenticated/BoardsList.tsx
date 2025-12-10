@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { UserButton } from '@clerk/clerk-react';
+import { UserButton } from '../components/UserButton';
 import Logo from '../components/logo';
 import { Button } from '../components/ui/button';
 import Footer from '../components/lander/footer';
@@ -14,16 +14,18 @@ import EmptyState from '../components/EmptyState';
 import { useHalloween } from '../providers/halloween-provider';
 import { LoadingIndicator } from './LoadingIndicator';
 import { HalloweenSwitcher } from '../components/halloween-switcher';
+import { useConvexAuth } from '../hooks/useConvexAuth';
 
 const BoardsList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState<'Recent' | 'Oldest' | 'Alphabetical' | 'Most Notes'>('Recent');
     const [showTrashed, setShowTrashed] = useState(false);
     const { isHalloweenMode } = useHalloween();
+    const { user, token } = useConvexAuth();
 
     const { results, status, loadMore } = usePaginatedQuery(
         api.boards.getLazyBoards,
-        { searchTerm, sortBy, showTrashed },
+        token ? { token, searchTerm, sortBy, showTrashed } : "skip",
         { initialNumItems: 10 }
     );
 
@@ -32,34 +34,37 @@ const BoardsList: React.FC = () => {
     const updateBoard = useMutation(api.boards.updateBoard);
     const restoreBoard = useMutation(api.boards.restoreBoard);
     const permanentlyDeleteBoard = useMutation(api.boards.permanentlyDeleteBoard);
-    const userBoardsCount = useQuery(api.boards.getUserBoardsCount, {}) || 0;
-    const userBoardsTrashCount = useQuery(api.boards.getUserBoardsTrashCount, {}) || 0;
+    const userBoardsCount = useQuery(api.boards.getUserBoardsCount, token ? { token } : "skip") || 0;
+    const userBoardsTrashCount = useQuery(api.boards.getUserBoardsTrashCount, token ? { token } : "skip") || 0;
     const [newBoardId, setNewBoardId] = useState<Id<"boards"> | null>(null);
 
 
     const handleCreateBoard = useCallback(async () => {
+        if (!token) return;
         const newBoardName = `New Board`;
-        const newBoardId = await createBoard({ name: newBoardName });
+        const newBoardId = await createBoard({ token, name: newBoardName });
         return newBoardId;
-    }, [createBoard]);
+    }, [createBoard, token]);
 
     const handleDeleteBoard = useCallback(async (boardId: Id<"boards">) => {
-        await deleteBoard({ boardId });
-    }, [deleteBoard]);
+        if (!token) return;
+        await deleteBoard({ token, boardId });
+    }, [deleteBoard, token]);
 
     const handleEditBoard = useCallback(async (boardId: Id<"boards">, newName: string) => {
-        if (newName.trim() !== '') {
-            await updateBoard({ boardId, name: newName });
-        }
-    }, [updateBoard]);
+        if (!token || newName.trim() === '') return;
+        await updateBoard({ token, boardId, name: newName });
+    }, [updateBoard, token]);
 
     const handleRestoreBoard = useCallback(async (boardId: Id<"boards">) => {
-        await restoreBoard({ boardId });
-    }, [restoreBoard]);
+        if (!token) return;
+        await restoreBoard({ token, boardId });
+    }, [restoreBoard, token]);
 
     const handlePermanentlyDeleteBoard = useCallback(async (boardId: Id<"boards">) => {
-        await permanentlyDeleteBoard({ boardId });
-    }, [permanentlyDeleteBoard]);
+        if (!token) return;
+        await permanentlyDeleteBoard({ token, boardId });
+    }, [permanentlyDeleteBoard, token]);
 
     const handleSortChange = useCallback((option: string) => {
         setSortBy(option as 'Recent' | 'Oldest' | 'Alphabetical' | 'Most Notes');
@@ -85,10 +90,17 @@ const BoardsList: React.FC = () => {
                     <div className="flex flex-col sm:flex-row justify-between items-center">
                         <div className="flex items-center mb-4 sm:mb-0">
                             <Logo className={`h-8 w-8 mr-2 ${isHalloweenMode ? 'animate-spooky-shake' : ''}`} />
-                            <span className={`text-lg font-bold ${isHalloweenMode ? 'text-halloween-orange' : 'text-gray-600 dark:text-gray-300'
-                                }`}>
-                                Sticky
-                            </span>
+                            <div className="flex flex-col">
+                                <span className={`text-lg font-bold ${isHalloweenMode ? 'text-halloween-orange' : 'text-gray-600 dark:text-gray-300'
+                                    }`}>
+                                    Sticky
+                                </span>
+                                {user?.company?.name && (
+                                    <span className={`text-xs ${isHalloweenMode ? 'text-halloween-ghost' : 'text-gray-500 dark:text-gray-400'}`}>
+                                        {user.company.name}
+                                    </span>
+                                )}
+                            </div>
                             <span className={`ml-2 inline-flex items-center rounded text-xs font-medium ${isHalloweenMode ? 'text-halloween-ghost' : ''
                                 }`}>
                                 {isHalloweenMode ? 'Haunted Beta' : 'Beta'}

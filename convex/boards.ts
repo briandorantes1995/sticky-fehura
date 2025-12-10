@@ -6,6 +6,7 @@ import { DataModel } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import { Triggers } from "convex-helpers/server/triggers";
 import { customMutation,customCtx } from "convex-helpers/server/customFunctions";
+import { getAuthenticatedUserFromQuery, getAuthenticatedUserFromMutation } from "./authHelpers";
 
 const aggregateBoardsByUser = new TableAggregate<[string, boolean], DataModel, "boards">(
   components.aggregateBoardsByUser,
@@ -30,52 +31,25 @@ export const backfillAggregates = internalMutation({
 });
 
 export const getUserBoardsCount = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUserFromQuery(ctx, args.token);
     return await aggregateBoardsByUser.count(ctx, { prefix: [user._id, false] });
   },
 });
 
 export const getUserBoardsTrashCount = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUserFromQuery(ctx, args.token);
     return await aggregateBoardsByUser.count(ctx, { prefix: [user._id, true] });
   },
 });
 
 export const getBoards = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUserFromQuery(ctx, args.token);
     return await ctx.db
       .query("boards")
       .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
@@ -84,20 +58,12 @@ export const getBoards = query({
 });
 
 export const getBoard = query({
-  args: { boardId: v.id("boards") },
+  args: { 
+    token: v.string(),
+    boardId: v.id("boards") 
+  },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromQuery(ctx, args.token);
 
     const board = await ctx.db.get(args.boardId);
     if (!board) {
@@ -127,19 +93,12 @@ export const getBoardOwner = query({
 });
 
 export const createBoard = mutation({
-  args: { name: v.string() },
+  args: { 
+    token: v.string(),
+    name: v.string() 
+  },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromMutation(ctx, args.token);
 
     const boardId = await ctx.db.insert("boards", {
       name: args.name,
@@ -190,23 +149,14 @@ export const permanentlyDeleteBoard = mutation({
 
 export const getLazyBoards = query({
   args: {
+    token: v.string(),
     paginationOpts: paginationOptsValidator,
     searchTerm: v.optional(v.string()),
     sortBy: v.union(v.literal("Recent"), v.literal("Oldest"), v.literal("Alphabetical"), v.literal("Most Notes")),
     showTrashed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromQuery(ctx, args.token);
 
     let boardsQuery;
 

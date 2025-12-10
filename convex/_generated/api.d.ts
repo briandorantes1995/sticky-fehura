@@ -1,5 +1,3 @@
-/* prettier-ignore-start */
-
 /* eslint-disable */
 /**
  * Generated `api` utility.
@@ -10,14 +8,15 @@
  * @module
  */
 
+import type * as appAuth from "../appAuth.js";
+import type * as authHelpers from "../authHelpers.js";
 import type * as boardSharing from "../boardSharing.js";
 import type * as boards from "../boards.js";
-import type * as emails from "../emails.js";
+import type * as jwtAuth from "../jwtAuth.js";
 import type * as notes from "../notes.js";
 import type * as presence from "../presence.js";
 import type * as support from "../support.js";
 import type * as users from "../users.js";
-import type * as welcomeEmail from "../welcomeEmail.js";
 
 import type {
   ApiFromModules,
@@ -33,14 +32,15 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  appAuth: typeof appAuth;
+  authHelpers: typeof authHelpers;
   boardSharing: typeof boardSharing;
   boards: typeof boards;
-  emails: typeof emails;
+  jwtAuth: typeof jwtAuth;
   notes: typeof notes;
   presence: typeof presence;
   support: typeof support;
   users: typeof users;
-  welcomeEmail: typeof welcomeEmail;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -164,5 +164,3 @@ export declare const components: {
     };
   };
 };
-
-/* prettier-ignore-end */

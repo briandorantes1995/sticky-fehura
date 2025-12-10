@@ -1,8 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthenticatedUserFromMutation, getAuthenticatedUserFromQuery } from "./authHelpers";
 
 export const updatePresence = mutation({
   args: { 
+    token: v.string(),
     boardId: v.id("boards"),
     cursorPosition: v.object({
       x: v.number(),
@@ -11,17 +13,7 @@ export const updatePresence = mutation({
     isHeartbeat: v.boolean()
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromMutation(ctx, args.token);
 
     const now = Date.now();
     const existingPresence = await ctx.db
@@ -48,8 +40,21 @@ export const updatePresence = mutation({
 });
 
 export const getActiveUsers = query({
-  args: { boardId: v.id("boards") },
+  args: { 
+    token: v.string(),
+    boardId: v.id("boards") 
+  },
   handler: async (ctx, args) => {
+    // Obtener el usuario actual para filtrar por compañía
+    const currentUser = await getAuthenticatedUserFromQuery(ctx, args.token);
+
+    // Solo mostrar usuarios de la misma compañía
+    const currentCompanyId = currentUser.companyId;
+    if (!currentCompanyId) {
+      // Si el usuario no tiene companyId, no mostrar colaboradores
+      return [];
+    }
+
     const thirtySecondsAgo = Date.now() - 30000;
     const activePresence = await ctx.db
       .query("presence")
@@ -64,7 +69,8 @@ export const getActiveUsers = query({
       userIds.map(async (userId) => {
         const user = await ctx.db.get(userId);
         const presence = activePresence.find(p => p.userId === userId);
-        if (user && presence) {
+        // Filtrar solo usuarios de la misma compañía
+        if (user && presence && user.companyId === currentCompanyId) {
           return {
             _id: user._id,
             name: user.name,
@@ -81,19 +87,12 @@ export const getActiveUsers = query({
 });
 
 export const removePresence = mutation({
-  args: { boardId: v.id("boards") },
+  args: { 
+    token: v.string(),
+    boardId: v.id("boards") 
+  },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier.split('|')[1]))
-      .unique();
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getAuthenticatedUserFromMutation(ctx, args.token);
 
     const presence = await ctx.db
       .query("presence")

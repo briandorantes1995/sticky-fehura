@@ -4,7 +4,7 @@ import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 import Note from './Note';
 import ToolsBar from './ToolsBar';
-import { UserButton } from '@clerk/clerk-react';
+import { UserButton } from '../components/UserButton';
 import Logo from '../components/logo';
 import { usePresence } from '../hooks/usePresence';
 import Modal from '../components/ui/modal';
@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 import ErrorMessage from '../components/ErrorMessage';
 import { HelpCircle } from 'lucide-react';
 import HelpModal from '../components/HelpModal';
+import { useApiAuth } from '../hooks/useApiAuth';
 
 interface WhiteboardProps {
     boardId: Id<"boards">;
@@ -23,17 +24,18 @@ interface WhiteboardProps {
 const generateShareLink = (code: string) => `${window.location.origin}/board?shareCode=${code}`;
 
 const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
-    const currentUser = useQuery(api.users.getCurrentUser);
+    const { token } = useApiAuth();
+    const currentUser = useQuery(api.users.getCurrentUser, token ? { token } : "skip");
     const [actualBoardId, setActualBoardId] = useState<Id<"boards">>(boardId);
     const boardOwner = useQuery(api.boards.getBoardOwner, { boardId: actualBoardId });
     const shareBoard = useMutation(api.boardSharing.shareBoard);
-    const board = useQuery(api.boards.getBoard, { boardId: actualBoardId });
+    const board = useQuery(api.boards.getBoard, token ? { token, boardId: actualBoardId } : "skip");
     const getSharedBoardId = useQuery(api.boardSharing.getSharedBoardId,
         { shareCode: new URLSearchParams(window.location.search).get('shareCode') || '' }
     );
     const isLoading = currentUser === undefined || board === undefined;
     const [error, setError] = useState<string | null>(null);
-    const notes = useQuery(api.notes.getNotes, { boardId: actualBoardId });
+    const notes = useQuery(api.notes.getNotes, token ? { token, boardId: actualBoardId } : "skip");
     const createNote = useMutation(api.notes.createNote).withOptimisticUpdate((localStore, args) => {
         const existingNotes = localStore.getQuery(api.notes.getNotes, { boardId: actualBoardId }) || [];
         const tempId = `temp_${Date.now()}` as Id<"notes">;
@@ -156,8 +158,9 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
             const x = clientX - rect.left;
             const y = clientY - rect.top;
 
-            if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height) {
+            if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height && token) {
                 createNote({
+                    token,
                     boardId: actualBoardId,
                     content: '',
                     color: '#ffff88',
@@ -209,14 +212,14 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
         position: { x: number; y: number };
         size: { width: number; height: number };
     }>) => {
-        if (noteId !== "tempId") {
-            updateNote({ noteId, ...updates }).catch(error => console.error("Error updating note:", error));
+        if (noteId !== "tempId" && token) {
+            updateNote({ token, noteId, ...updates }).catch(error => console.error("Error updating note:", error));
         }
-    }, [updateNote]);
+    }, [updateNote, token]);
 
     const handleDeleteNote = (noteId: Id<"notes"> | 'tempId') => {
-        if (noteId !== 'tempId') {
-            deleteNote({ noteId }).catch(error => console.error("Error deleting note:", error));
+        if (noteId !== 'tempId' && token) {
+            deleteNote({ token, noteId }).catch(error => console.error("Error deleting note:", error));
         }
         if (selectedNote === noteId) {
             setSelectedNote(null);

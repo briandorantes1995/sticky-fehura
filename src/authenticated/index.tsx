@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { SignedIn } from '@clerk/clerk-react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import Whiteboard from './Board';
@@ -8,11 +7,13 @@ import BoardsList from './BoardsList';
 import { useParams, useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
+import { useApiAuth } from '../hooks/useApiAuth';
 
 const AuthenticatedApp: React.FC = () => {
   const [boardId, setBoardId] = useState<Id<"boards"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const boards = useQuery(api.boards.getBoards);
+  const { token } = useApiAuth();
+  const boards = useQuery(api.boards.getBoards, token ? { token } : "skip");
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -50,7 +51,7 @@ const AuthenticatedApp: React.FC = () => {
   }
 
   return (
-    <SignedIn>
+    <>
       {shareCodeError ? (
         <div className="flex items-center justify-center h-screen">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -63,14 +64,14 @@ const AuthenticatedApp: React.FC = () => {
       ) : (
         <BoardsList />
       )}
-          <button
-                onClick={() => setIsFeedbackModalOpen(true)}
-                className="fixed bottom-4 right-4 bg-main hover:bg-mainAccent text-text p-3 rounded-full shadow-md transition-colors duration-200"
-            >
-                <MessageCircle size={24} />
-            </button>
-            <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
-    </SignedIn>
+      <button
+        onClick={() => setIsFeedbackModalOpen(true)}
+        className="fixed bottom-4 right-4 bg-main hover:bg-mainAccent text-text p-3 rounded-full shadow-md transition-colors duration-200"
+      >
+        <MessageCircle size={24} />
+      </button>
+      <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
+    </>
   );
 };
 

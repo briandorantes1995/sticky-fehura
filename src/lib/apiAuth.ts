@@ -1,0 +1,255 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const TOKEN_KEY = 'app_auth_token';
+const USER_KEY = 'app_user_data';
+const REDUX_PERSIST_KEY = 'persist:auth';
+
+export interface MemberRole {
+  id: string;
+  name: string;
+  level?: number;
+  description?: string;
+  created_at?: string;
+}
+
+export interface MemberCompany {
+  id: string;
+  name: string;
+  legal_name?: string | null;
+  type?: string;
+  plan_id?: string | null;
+  owner_user_id?: string;
+  created_at?: string;
+  invitation_code?: string;
+}
+
+export interface ApiUser {
+  id: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  company_id?: string;
+  role?: string;
+  profile_image_url?: string;
+  phone?: string;
+  roles?: MemberRole | MemberRole[];
+  company?: MemberCompany;
+}
+
+export interface LoginResponse {
+  token: {
+    accessToken: string;
+    refreshToken: string;
+  };
+  user: ApiUser;
+}
+
+/**
+ * Almacena el token de autenticación
+ */
+export function setAuthToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+/**
+ * Obtiene el token de autenticación desde Redux persist o localStorage
+ * Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
+ */
+export function getAuthToken(): string | null {
+  // Primero intentar leer de Redux persist
+  try {
+    const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
+    if (reduxPersist) {
+      const parsed = JSON.parse(reduxPersist);
+      // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
+      if (parsed.accessToken) {
+        return parsed.accessToken;
+      }
+    }
+  } catch (e) {
+    console.warn('Error leyendo Redux persist:', e);
+  }
+
+  // Fallback a localStorage normal
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Elimina el token de autenticación
+ * IMPORTANTE: Solo limpia los datos de esta app, NO afecta otros datos de Redux persist
+ * Redux persist guarda cada slice por separado, así que solo limpiamos persist:auth
+ */
+export function clearAuthToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  // Limpiar Redux persist auth (cada slice se guarda por separado, así que esto solo afecta auth)
+  try {
+    // Limpiar el slice auth, pero Redux persist maneja otros slices (notifications, ui, etc.) por separado
+    localStorage.removeItem(REDUX_PERSIST_KEY);
+  } catch (e) {
+    // Ignorar errores
+  }
+}
+
+/**
+ * Almacena los datos del usuario
+ */
+export function setUserData(user: ApiUser): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+/**
+ * Obtiene los datos del usuario desde Redux persist o localStorage
+ * Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
+ */
+export function getUserData(): ApiUser | null {
+  // Primero intentar leer de Redux persist
+  try {
+    const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
+    if (reduxPersist) {
+      const parsed = JSON.parse(reduxPersist);
+      // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
+      if (parsed.user) {
+        // Normalizar roles si es necesario
+        const user = parsed.user;
+        if (user.roles && !Array.isArray(user.roles)) {
+          user.roles = [user.roles];
+        }
+        return user;
+      }
+    }
+  } catch (e) {
+    console.warn('Error leyendo Redux persist:', e);
+  }
+
+  // Fallback a localStorage normal
+  const userData = localStorage.getItem(USER_KEY);
+  if (!userData) return null;
+  try {
+    return JSON.parse(userData);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Verifica si hay un token válido
+ */
+export function hasValidToken(): boolean {
+  const token = getAuthToken();
+  if (!token) return false;
+  
+  // Verificar si el token está expirado (decodificar y verificar exp)
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      clearAuthToken();
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Login usando la API
+ */
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  if (!API_BASE_URL) {
+    throw new Error('API_BASE_URL no está configurado');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Error al iniciar sesión' }));
+    throw new Error(error.message || 'Error al iniciar sesión');
+  }
+
+  const data = await response.json();
+  
+  if (!data.token || !data.user) {
+    throw new Error('Respuesta inválida del servidor');
+  }
+
+  // La respuesta tiene token.accessToken y token.refreshToken
+  const accessToken = data.token.accessToken || data.token;
+  const refreshToken = data.token.refreshToken;
+
+  // Almacenar token y usuario
+  setAuthToken(accessToken);
+  setUserData(data.user);
+
+  // También actualizar Redux persist en el formato correcto
+  // Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
+  // Esto es compatible con tu web principal que también usa Redux persist
+  try {
+    const persistData = {
+      accessToken,
+      refreshToken: refreshToken || null,
+      user: data.user,
+      loading: false
+    };
+    
+    localStorage.setItem(REDUX_PERSIST_KEY, JSON.stringify(persistData));
+  } catch (e) {
+    console.warn('Error actualizando Redux persist:', e);
+  }
+
+  return {
+    token: accessToken,
+    user: data.user,
+  };
+}
+
+/**
+ * Verifica el token con el servidor
+ */
+export async function verifyToken(): Promise<ApiUser | null> {
+  const token = getAuthToken();
+  if (!token) return null;
+
+  if (!API_BASE_URL) {
+    // Si no hay API configurada, usar datos locales
+    return getUserData();
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      clearAuthToken();
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.user) {
+      setUserData(data.user);
+      return data.user;
+    }
+
+    return null;
+  } catch {
+    // Si falla la verificación, usar datos locales
+    return getUserData();
+  }
+}
+
+/**
+ * Logout
+ */
+export function logout(): void {
+  clearAuthToken();
+}
+

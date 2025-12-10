@@ -7,9 +7,10 @@ export default defineSchema({
     email: v.optional(v.string()),
     profileImageUrl: v.optional(v.string()),
     tokenIdentifier: v.string(),
-    plan: v.optional(v.string()),
+    companyId: v.optional(v.string()),
     onBoarding: v.optional(v.boolean())
-  }).index("by_token", ["tokenIdentifier"]),
+  }).index("by_token", ["tokenIdentifier"])
+    .index("by_company", ["companyId"]),
 
   boards: defineTable({
     name: v.string(),
@@ -62,10 +63,4 @@ export default defineSchema({
     userId: v.id("users"),
     input: v.string()
   }),
-
-  emailLogs: defineTable({
-    userId: v.id("users"),
-    type: v.string(),
-    sentAt: v.number(),
-  }).index("by_user_and_type", ["userId", "type"]),
 });

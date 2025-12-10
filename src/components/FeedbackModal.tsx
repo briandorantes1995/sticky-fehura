@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '../hooks/use-toast';
+import { useApiAuth } from '../hooks/useApiAuth';
 
 interface FeedbackModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface FeedbackModalProps {
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
+    const { token } = useApiAuth();
     const submitHelpRequest = useMutation(api.support.supportRequest);
     const { toast } = useToast();
 
@@ -27,8 +29,17 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
             return;
         }
 
+        if (!token) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to submit feedback.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
-            await submitHelpRequest({ input });
+            await submitHelpRequest({ token, input });
             toast({
                 title: "Feedback Submitted",
                 description: "Thank you for your feedback! We appreciate your input.",
