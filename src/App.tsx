@@ -78,38 +78,69 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const { isLoaded } = useConvexAuth();
   const { t } = useLanguage();
-  const [initialCheck, setInitialCheck] = useState(true);
-  const [shouldRedirectToBoards, setShouldRedirectToBoards] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // Verificación inicial síncrona de sesión antes de renderizar
+  // Verificación de sesión ANTES de renderizar el Router
   useEffect(() => {
-    if (initialCheck) {
-      const storedToken = getAuthToken();
-      const storedUser = getUserData();
-
-      // Si existe sesión válida en Redux persist, redirigir a boards
-      if (storedToken && storedUser && hasValidToken()) {
-        const currentPath = window.location.pathname;
-        const isAuthRoute = currentPath.startsWith('/boards') || 
-                           currentPath.startsWith('/board') ||
-                           currentPath === '/app-login' ||
-                           currentPath === '/oauth-callback';
+    const checkSession = () => {
+      try {
+        const storedToken = getAuthToken();
+        const storedUser = getUserData();
+        const tokenIsValid = storedToken ? hasValidToken() : false;
         
-        if (!isAuthRoute) {
-          setShouldRedirectToBoards(true);
-          window.location.href = '/boards';
-          return;
-        }
-      }
-      
-      setInitialCheck(false);
-    }
-  }, [initialCheck]);
+        console.log('🔍 Verificando sesión inicial:', { 
+          hasToken: !!storedToken, 
+          hasUser: !!storedUser,
+          tokenValid: tokenIsValid,
+          currentPath: window.location.pathname,
+          tokenType: storedToken ? typeof storedToken : 'null',
+          tokenLength: storedToken ? storedToken.length : 0,
+          tokenPreview: storedToken ? storedToken.substring(0, 30) + '...' : null,
+          userPreview: storedUser ? { id: storedUser.id, email: storedUser.email } : null
+        });
 
-  if (initialCheck || shouldRedirectToBoards) {
+        // Si existe sesión válida en Redux persist, redirigir a boards
+        if (storedToken && storedUser && tokenIsValid) {
+          const currentPath = window.location.pathname;
+          const isAuthRoute = currentPath.startsWith('/boards') || 
+                             currentPath.startsWith('/board') ||
+                             currentPath === '/app-login' ||
+                             currentPath === '/oauth-callback';
+          
+          if (!isAuthRoute) {
+            console.log('✅ Sesión válida encontrada, redirigiendo a /boards desde:', currentPath);
+            // Usar replace para evitar que el usuario pueda volver atrás
+            setTimeout(() => {
+              window.location.replace('/boards');
+            }, 100); // Pequeño delay para asegurar que el log se muestre
+            return;
+          } else {
+            console.log('✅ Ya estás en una ruta autenticada:', currentPath);
+          }
+        } else {
+          console.log('❌ No hay sesión válida:', {
+            hasToken: !!storedToken,
+            hasUser: !!storedUser,
+            tokenValid: tokenIsValid,
+            reason: !storedToken ? 'No hay token' : !storedUser ? 'No hay usuario' : !tokenIsValid ? 'Token inválido o expirado' : 'Desconocido'
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error verificando sesión:', error);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    // Ejecutar inmediatamente
+    checkSession();
+  }, []);
+
+  // No renderizar nada hasta que se complete la verificación
+  if (isCheckingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212]">
-        <div className="text-white">{t('common.loading')}</div>
+        <div className="text-white">Cargando...</div>
       </div>
     );
   }

@@ -95,7 +95,7 @@ function Signin() {
                             value={email}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                             placeholder={t('signin.email')}
-                            className="w-full text-white"
+                            className="w-full bg-gray-800 dark:bg-secondaryBlack text-white placeholder-gray-400 border-gray-700 dark:border-darkBorder"
                         />
                     </div>
                     <div>
@@ -104,7 +104,7 @@ function Signin() {
                             value={password}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             placeholder={t('signin.password')}
-                            className="w-full text-white"
+                            className="w-full bg-gray-800 dark:bg-secondaryBlack text-white placeholder-gray-400 border-gray-700 dark:border-darkBorder"
                         />
                     </div>
                     <Button
