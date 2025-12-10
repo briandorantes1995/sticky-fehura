@@ -10,8 +10,8 @@
 
 import type * as appAuth from "../appAuth.js";
 import type * as authHelpers from "../authHelpers.js";
-import type * as boardSharing from "../boardSharing.js";
 import type * as boards from "../boards.js";
+import type * as boardSharing from "../boardSharing.js";
 import type * as jwtAuth from "../jwtAuth.js";
 import type * as notes from "../notes.js";
 import type * as presence from "../presence.js";
@@ -34,8 +34,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   appAuth: typeof appAuth;
   authHelpers: typeof authHelpers;
-  boardSharing: typeof boardSharing;
   boards: typeof boards;
+  boardSharing: typeof boardSharing;
   jwtAuth: typeof jwtAuth;
   notes: typeof notes;
   presence: typeof presence;
