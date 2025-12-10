@@ -65,7 +65,7 @@ export default {
         },
         sparkle: {
           '0%, 100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
-          '50%': { transform: 'scale(1.1) rotate(180deg)', opacity: '0.8' },
+          '50%': { transform: 'scale(1.05) rotate(90deg)', opacity: '0.9' },
         },
         bloom: {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
@@ -77,7 +77,7 @@ export default {
         'spooky-shake': 'spookyShake 2s ease-in-out infinite',
         'snow-fall': 'snowFall 10s linear infinite',
         'petal-fall': 'petalFall 8s linear infinite',
-        'sparkle': 'sparkle 2s ease-in-out infinite',
+        'sparkle': 'sparkle 4s ease-in-out infinite',
         'bloom': 'bloom 3s ease-in-out infinite',
       },
       borderRadius: {
