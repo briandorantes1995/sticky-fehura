@@ -39,9 +39,22 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
     const createNote = useMutation(api.notes.createNote).withOptimisticUpdate((localStore, args) => {
         if (!token) return;
         const existingNotes = localStore.getQuery(api.notes.getNotes, { token, boardId: actualBoardId }) || [];
-        const tempId = `temp_${Date.now()}` as Id<"notes">;
+        // Usar el tempId del ref si está disponible, sino generar uno nuevo
+        const tempId = lastCreatedTempIdRef.current || (`temp_${Date.now()}` as Id<"notes">);
         const now = Date.now();
-        localStore.setQuery(api.notes.getNotes, { token, boardId: actualBoardId }, [...existingNotes, { _id: tempId, _creationTime: now, ...args }]);
+        // Extraer solo los campos de la nota, excluyendo token y boardId
+        const { token: _, boardId: __, ...noteData } = args;
+        const newNote = {
+            _id: tempId,
+            _creationTime: now,
+            boardId: args.boardId,
+            content: noteData.content,
+            color: noteData.color,
+            position: noteData.position,
+            size: noteData.size,
+            zIndex: noteData.zIndex,
+        };
+        localStore.setQuery(api.notes.getNotes, { token, boardId: actualBoardId }, [...existingNotes, newNote]);
     });
     const updateNote = useMutation(api.notes.updateNote).withOptimisticUpdate((localStore, args) => {
         if (!token) return;
@@ -94,11 +107,32 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
         }
     }, [getSharedBoardId, boardId]);
 
+    // Seleccionar automáticamente la nota recién creada
+    useEffect(() => {
+        if (lastCreatedTempIdRef.current && notes) {
+            const tempId = lastCreatedTempIdRef.current;
+            // Buscar si la nota temporal todavía existe o si ya se convirtió en una nota real
+            const tempNote = notes.find(note => note._id === tempId);
+            if (tempNote) {
+                setSelectedNote(tempId);
+                lastCreatedTempIdRef.current = null;
+            } else {
+                // Si la nota temporal ya no existe, buscar la última nota creada
+                const lastNote = notes[notes.length - 1];
+                if (lastNote) {
+                    setSelectedNote(lastNote._id);
+                    lastCreatedTempIdRef.current = null;
+                }
+            }
+        }
+    }, [notes]);
+
     const [selectedNote, setSelectedNote] = useState<Id<"notes"> | 'tempId' | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const boardRef = useRef<HTMLDivElement>(null);
     const [currentTool, setCurrentTool] = useState<'note' | null>(null);
     const { activeUsers, updateCursorPosition } = usePresence(boardId, isShared);
+    const lastCreatedTempIdRef = useRef<Id<"notes"> | 'tempId' | null>(null);
 
     const useStableColorAssignment = (activeUsers: any[] | undefined) => {
         const colorAssignments = useRef(new Map<Id<"users">, string>());
@@ -162,6 +196,10 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
             const y = clientY - rect.top;
 
             if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height && token) {
+                // Generar tempId antes de crear la nota para poder seleccionarla inmediatamente
+                const tempId = `temp_${Date.now()}` as Id<"notes">;
+                lastCreatedTempIdRef.current = tempId;
+                
                 createNote({
                     token,
                     boardId: actualBoardId,
@@ -170,7 +208,16 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
                     position: { x, y },
                     size: { width: 200, height: 200 },
                     zIndex: notes ? Math.max(...notes.map(note => note.zIndex ?? 0), 0) + 1 : 1,
+                }).then((noteId) => {
+                    // Seleccionar la nota recién creada (real ID del servidor)
+                    if (noteId) {
+                        setSelectedNote(noteId);
+                        lastCreatedTempIdRef.current = null;
+                    }
                 }).catch(error => console.error("Error creating note:", error));
+                
+                // Seleccionar la nota temporal inmediatamente para feedback visual
+                setSelectedNote(tempId);
                 setCurrentTool(null);
             }
         }

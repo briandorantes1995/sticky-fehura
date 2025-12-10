@@ -25,6 +25,7 @@ const Note: React.FC<NoteProps> = ({ note, isSelected, onSelect, onUpdate, onDel
     const [resizeHandle, setResizeHandle] = useState<string | null>(null);
     const [isTyping, setIsTyping] = useState(false);
     const noteRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -109,6 +110,16 @@ const Note: React.FC<NoteProps> = ({ note, isSelected, onSelect, onUpdate, onDel
         };
     }, [isDragging, isResizing, handleMove]);
 
+    // Auto-focus el textarea cuando la nota se selecciona
+    useEffect(() => {
+        if (isSelected && textareaRef.current && !isDragging && !isResizing) {
+            // Pequeño delay para asegurar que el DOM esté actualizado
+            setTimeout(() => {
+                textareaRef.current?.focus();
+            }, 100);
+        }
+    }, [isSelected, isDragging, isResizing]);
+
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onUpdate(note._id, { content: e.target.value });
         setIsTyping(true);
@@ -148,9 +159,11 @@ const Note: React.FC<NoteProps> = ({ note, isSelected, onSelect, onUpdate, onDel
                 onClick={(e) => e.stopPropagation()}
             >
             <textarea
+                ref={textareaRef}
                 value={note.content}
                 onChange={handleTextareaChange}
                 className="w-full h-full resize-none bg-transparent outline-none text-gray-800"
+                placeholder="Escribe aquí..."
             />
             {isSelected && (
                 <>
