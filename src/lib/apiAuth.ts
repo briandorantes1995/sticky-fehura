@@ -55,13 +55,19 @@ export function setAuthToken(token: string): void {
  * Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
  */
 export function getAuthToken(): string | null {
-  // Primero intentar leer de Redux persist
+  // Primero intentar leer de Redux persist (compatible con tu web principal)
   try {
     const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
     if (reduxPersist) {
       const parsed = JSON.parse(reduxPersist);
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
+      // Leemos el accessToken tal cual Redux lo guarda (puede venir como string JSON escapado)
       if (parsed.accessToken) {
+        // Si viene como string JSON escapado (formato de Redux persist), parsearlo
+        // Si ya es un string normal, usarlo directamente
+        if (typeof parsed.accessToken === 'string' && parsed.accessToken.startsWith('"') && parsed.accessToken.endsWith('"')) {
+          return JSON.parse(parsed.accessToken);
+        }
         return parsed.accessToken;
       }
     }
@@ -102,15 +108,25 @@ export function setUserData(user: ApiUser): void {
  * Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
  */
 export function getUserData(): ApiUser | null {
-  // Primero intentar leer de Redux persist
+  // Primero intentar leer de Redux persist (compatible con tu web principal)
   try {
     const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
     if (reduxPersist) {
       const parsed = JSON.parse(reduxPersist);
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
       if (parsed.user) {
+        // Si viene como string JSON escapado (formato de Redux persist), parsearlo
+        // Si ya es un objeto, usarlo directamente
+        let user = parsed.user;
+        if (typeof user === 'string') {
+          try {
+            user = JSON.parse(user);
+          } catch {
+            // Si falla el parse, el user no es un JSON válido
+            return null;
+          }
+        }
         // Normalizar roles si es necesario
-        const user = parsed.user;
         if (user.roles && !Array.isArray(user.roles)) {
           user.roles = [user.roles];
         }
@@ -188,7 +204,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
   // También actualizar Redux persist en el formato correcto
   // Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
-  // Esto es compatible con tu web principal que también usa Redux persist
+  // Guardamos en el mismo formato que Redux persist espera (compatible con tu web principal)
   try {
     const persistData = {
       accessToken,
