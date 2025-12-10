@@ -3,13 +3,15 @@ import { Button } from '../ui/button';
 import { Check, Skull } from 'lucide-react';
 import Preview from './preview';
 import { useHalloween } from '../../providers/halloween-provider';
+import { useLanguage } from '../../providers/language-provider';
 
 const HeroSection: React.FC = () => {
     const { isHalloweenMode } = useHalloween();
+    const { t } = useLanguage();
 
     const features = isHalloweenMode 
-        ? ['Haunt your ideas', 'Spooky organization', 'Ghostly collaboration']
-        : ['Capture ideas', 'Organize effortlessly', 'Collaborate in real-time'];
+        ? [t('hero.feature1.halloween'), t('hero.feature2.halloween'), t('hero.feature3.halloween')]
+        : [t('hero.feature1'), t('hero.feature2'), t('hero.feature3')];
 
     return (
         <>
@@ -18,18 +20,18 @@ const HeroSection: React.FC = () => {
                 <div className="text-center w-full max-w-5xl mx-auto">
                     <h1 className={`mb-6 sm:mb-8 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight
                         ${isHalloweenMode ? 'text-halloween-orange animate-spooky-shake' : 'text-text dark:text-text-dark'}`}>
-                        {isHalloweenMode ? 'Spooky ideas that stick' : 'Ideas that stick'}
+                        {isHalloweenMode ? t('hero.title.halloween') : t('hero.title')}
                         <span className="relative inline-block ml-2">
                             <span className={`text-base-secondary absolute -bottom-2 left-1/2 flex -translate-x-1/2 translate-y-full -rotate-3 
                                 flex-nowrap items-center gap-1 whitespace-nowrap text-base sm:text-lg md:text-xl lg:text-2xl font-normal tracking-wide
                                 ${isHalloweenMode ? 'text-halloween-orange' : ''}`}>
-                                {isHalloweenMode ? 'if you dare 👻' : 'literally 😉'}
+                                {isHalloweenMode ? t('hero.subtitle.halloween') : t('hero.subtitle')}
                             </span>
                         </span>
                     </h1>
                     <p className={`mb-8 sm:mb-10 text-xl sm:text-2xl md:text-3xl font-medium leading-relaxed max-w-2xl mx-auto
                         ${isHalloweenMode ? 'text-halloween-ghost animate-float' : 'text-text dark:text-text-dark'}`}>
-                        {isHalloweenMode ? 'Where your thoughts come alive... muhahaha!' : 'Connect your thoughts in one sticky playground.'}
+                        {isHalloweenMode ? t('hero.description.halloween') : t('hero.description')}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 mb-12 sm:mb-16">
                         {features.map((feature, index) => (
@@ -51,7 +53,7 @@ const HeroSection: React.FC = () => {
                             className={`text-xl sm:text-2xl px-8 sm:px-10 py-4 sm:py-5
                                 ${isHalloweenMode ? 'bg-halloween-orange hover:bg-halloween-purple text-white' : ''}`}
                         >
-                            {isHalloweenMode ? 'Enter if you dare!' : 'Try now!'}
+                            {isHalloweenMode ? t('hero.button.halloween') : t('hero.button')}
                         </Button>
                     </div>
                 </div>

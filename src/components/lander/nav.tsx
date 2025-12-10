@@ -5,18 +5,13 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { useHalloween } from '../../providers/halloween-provider';
 import { HalloweenSwitcher } from '../halloween-switcher';
+import { LanguageSwitcher } from '../LanguageSwitcher';
+import { useLanguage } from '../../providers/language-provider';
 
 const NavBar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { isHalloweenMode } = useHalloween();
-
-    const scrollToSection = (id: string) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-        }
-        setIsMenuOpen(false);
-    };
+    const { t } = useLanguage();
 
     return (
         <nav className="fixed left-0 top-0 z-50 w-full px-4 pt-4">
@@ -33,23 +28,17 @@ const NavBar = () => {
                 </Link>
 
                 <div className="hidden sm:flex items-center space-x-8 text-sm flex-grow justify-center">
-                    <button
-                        className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
-                            }`}
-                        onClick={() => scrollToSection('faq')}
-                    >
-                        {isHalloweenMode ? 'Dark Secrets' : 'FAQ'}
-                    </button>
                 </div>
 
                 <div className="hidden sm:flex items-center space-x-4">
+                    <LanguageSwitcher />
                     <HalloweenSwitcher />
                     <Link to="/signin">
                         <Button className={isHalloweenMode
                             ? 'bg-halloween-orange hover:bg-halloween-purple text-white'
                             : 'bg-white'
                         } onClick={() => { }}>
-                            {isHalloweenMode ? 'Enter Portal' : 'Sign In'}
+                            {isHalloweenMode ? t('nav.signIn.halloween') : t('nav.signIn')}
                         </Button>
                     </Link>
                 </div>
@@ -71,21 +60,15 @@ const NavBar = () => {
                         : 'bg-white dark:bg-secondaryBlack border-border dark:border-darkBorder'
                     }`}>
                     <div className="flex flex-col items-center py-4 space-y-4">
-                        <button
-                            className={`transition-colors ${isHalloweenMode ? 'hover:text-halloween-orange' : 'hover:text-main'
-                                }`}
-                            onClick={() => scrollToSection('faq')}
-                        >
-                            {isHalloweenMode ? 'Dark Secrets' : 'FAQ'}
-                        </button>
                         <div className="flex items-center space-x-4">
+                            <LanguageSwitcher />
                             <HalloweenSwitcher />
                             <Link to="/signin">
                                 <Button className={isHalloweenMode
                                     ? 'bg-halloween-orange hover:bg-halloween-purple text-white'
                                     : 'bg-white'
                                 } onClick={() => { }}>
-                                    {isHalloweenMode ? 'Enter Portal' : 'Sign In'}
+                                    {isHalloweenMode ? t('nav.signIn.halloween') : t('nav.signIn')}
                                 </Button>
                             </Link>
                         </div>

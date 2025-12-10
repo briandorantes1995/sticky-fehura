@@ -15,6 +15,7 @@ import { useHalloween } from '../providers/halloween-provider';
 import { LoadingIndicator } from './LoadingIndicator';
 import { HalloweenSwitcher } from '../components/halloween-switcher';
 import { useConvexAuth } from '../hooks/useConvexAuth';
+import { useLanguage } from '../providers/language-provider';
 
 const BoardsList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -22,6 +23,7 @@ const BoardsList: React.FC = () => {
     const [showTrashed, setShowTrashed] = useState(false);
     const { isHalloweenMode } = useHalloween();
     const { user, token } = useConvexAuth();
+    const { t } = useLanguage();
 
     const { results, status, loadMore } = usePaginatedQuery(
         api.boards.getLazyBoards,
@@ -41,10 +43,10 @@ const BoardsList: React.FC = () => {
 
     const handleCreateBoard = useCallback(async () => {
         if (!token) return;
-        const newBoardName = `New Board`;
+        const newBoardName = t('boards.new');
         const newBoardId = await createBoard({ token, name: newBoardName });
         return newBoardId;
-    }, [createBoard, token]);
+    }, [createBoard, token, t]);
 
     const handleDeleteBoard = useCallback(async (boardId: Id<"boards">) => {
         if (!token) return;
@@ -67,14 +69,21 @@ const BoardsList: React.FC = () => {
     }, [permanentlyDeleteBoard, token]);
 
     const handleSortChange = useCallback((option: string) => {
-        setSortBy(option as 'Recent' | 'Oldest' | 'Alphabetical' | 'Most Notes');
-    }, []);
+        // Mapear las traducciones de vuelta a los valores originales
+        const sortMap: Record<string, 'Recent' | 'Oldest' | 'Alphabetical' | 'Most Notes'> = {
+            [t('boards.recent')]: 'Recent',
+            [t('boards.oldest')]: 'Oldest',
+            [t('boards.alphabetical')]: 'Alphabetical',
+            [t('boards.mostNotes')]: 'Most Notes',
+        };
+        setSortBy(sortMap[option] || 'Recent');
+    }, [t]);
 
     const sortOptions = [
-        { name: 'Recent', link: '#' },
-        { name: 'Oldest', link: '#' },
-        { name: 'Alphabetical', link: '#' },
-        { name: 'Most Notes', link: '#' },
+        { name: t('boards.recent'), link: '#' },
+        { name: t('boards.oldest'), link: '#' },
+        { name: t('boards.alphabetical'), link: '#' },
+        { name: t('boards.mostNotes'), link: '#' },
     ];
 
     return (
@@ -120,7 +129,7 @@ const BoardsList: React.FC = () => {
                             >
                                 {isHalloweenMode ? <Ghost className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                                 <span className="inline">
-                                    {isHalloweenMode ? 'Summon Board' : 'New Board'}
+                                    {isHalloweenMode ? t('boards.new.halloween') : t('boards.new')}
                                 </span>
                             </Button>
                             <UserButton />
@@ -144,12 +153,12 @@ const BoardsList: React.FC = () => {
 
             <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Your Boards</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">{t('boards.title')}</h1>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
                         <div className="relative mb-4 sm:mb-0">
                             <input
                                 type="text"
-                                placeholder={isHalloweenMode ? "Search your haunted boards..." : "Search boards..."}
+                                placeholder={isHalloweenMode ? t('boards.search.halloween') : t('boards.search')}
                                 className={`w-full pl-10 pr-4 py-2 rounded-lg border ${isHalloweenMode
                                         ? 'bg-halloween-black/50 border-halloween-orange text-halloween-ghost placeholder-halloween-ghost/50'
                                         : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500'
@@ -161,7 +170,7 @@ const BoardsList: React.FC = () => {
                         </div>
                         <Dropdown
                             items={sortOptions}
-                            text={`Sort: ${sortBy}`}
+                            text={`${t('boards.sort')}: ${sortBy}`}
                             onSelect={handleSortChange}
                         />
                     </div>
@@ -169,7 +178,7 @@ const BoardsList: React.FC = () => {
 
                 <div className="flex flex-col md:flex-row md:space-x-8">
                     <div className="w-full md:w-1/4 mb-8 md:mb-0">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Organize</h2>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('boards.organize')}</h2>
                         <ul className="space-y-2">
                             <li>
                                 <Button
@@ -178,7 +187,7 @@ const BoardsList: React.FC = () => {
                                 >
                                     <div className="flex items-center">
                                         <Folder className="w-4 h-4 mr-2" />
-                                        All Boards
+                                        {t('boards.all')}
                                     </div>
                                     <span className="text-xs font-semibold px-2 py-1 rounded-full">
                                         {userBoardsCount}
@@ -189,7 +198,7 @@ const BoardsList: React.FC = () => {
                                 <Button onClick={() => setShowTrashed(true)} className="w-full flex items-ceneter justify-between bg-red-500 hover:bg-red-600">
                                     <div className="flex items-center">
                                         <Trash2 className="w-4 h-4 mr-2" />
-                                        Trash
+                                        {t('boards.trash')}
                                     </div>
                                     <span className="text-xs font-semibold px-2 py-1 rounded-full">
                                         {userBoardsTrashCount}
@@ -200,7 +209,15 @@ const BoardsList: React.FC = () => {
                     </div>
                     <div className="w-full md:w-3/4">
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                            {showTrashed ? 'Trashed Boards' : `${sortBy} Boards`}
+                            {showTrashed ? t('boards.trashed') : (() => {
+                                const sortMap: Record<string, string> = {
+                                    'Recent': t('boards.recent'),
+                                    'Oldest': t('boards.oldest'),
+                                    'Alphabetical': t('boards.alphabetical'),
+                                    'Most Notes': t('boards.mostNotes'),
+                                };
+                                return `${sortMap[sortBy] || sortBy} ${t('boards.title')}`;
+                            })()}
                         </h2>
                         <div className="h-[calc(100vh-300px)] overflow-y-auto">
                             {status === "LoadingFirstPage" || status === "LoadingMore" ? (
@@ -230,11 +247,11 @@ const BoardsList: React.FC = () => {
                                                         />
                                                     </h3>
                                                     <p className="text-gray-500 dark:text-gray-400 mb-4 text-xs">
-                                                        Last modified: {formatLastModified(board.lastModified)}
+                                                        {t('boards.lastModified')}: {formatLastModified(board.lastModified)}
                                                     </p>
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                            {board.notesCount === 1 ? '1 note' : `${board.notesCount || 0} notes`}
+                                                            {board.notesCount === 1 ? `1 ${t('boards.note')}` : `${board.notesCount || 0} ${t('boards.notes')}`}
                                                         </span>
                                                         <div className="flex space-x-2">
                                                             {showTrashed ? (
@@ -255,7 +272,7 @@ const BoardsList: React.FC = () => {
                                                                             onClick={() => setNewBoardId(null)}
                                                                         >
                                                                             <Folder className="w-4 h-4 mr-1" />
-                                                                            Open
+                                                                            {t('boards.open')}
                                                                         </Button>
                                                                     </Link>
                                                                     <Button size="sm" onClick={() => handleDeleteBoard(board._id)}>
@@ -272,15 +289,15 @@ const BoardsList: React.FC = () => {
                                 </div>
                             ) : (
                                 <EmptyState
-                                    message={showTrashed ? "Your trash is empty. Deleted boards will appear here." : "You don't have any boards yet. Create one to get started!"}
-                                    buttonText={showTrashed ? undefined : "Create New Board"}
+                                    message={showTrashed ? t('boards.empty.trash') : t('boards.empty')}
+                                    buttonText={showTrashed ? undefined : t('boards.new')}
                                     onButtonClick={showTrashed ? undefined : handleCreateBoard}
                                 />
                             )}
                         </div>
                         {status === "CanLoadMore" && (
                             <div className="mt-4 text-center">
-                                <Button onClick={() => loadMore(10)}>Load More</Button>
+                                <Button onClick={() => loadMore(10)}>{t('boards.loadMore')}</Button>
                             </div>
                         )}
                         {status === "LoadingMore" && <LoadingIndicator />}

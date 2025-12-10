@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import FAQSection from "./components/lander/faqs"
 import Footer from "./components/lander/footer"
 import HeroSection from "./components/lander/hero"
 import NavBar from "./components/lander/nav"
@@ -9,16 +8,18 @@ import Signin from './auth/signin';
 import { useConvexAuth } from './hooks/useConvexAuth';
 import AuthenticatedApp from './authenticated';
 import AppLogin from './auth/appLogin';
+import OAuthCallback from './auth/OAuthCallback';
 import ErrorBoundary from './components/ErrorBoundary';
-import SelfHostSection from './components/lander/selfhost';
+import { useLanguage } from './providers/language-provider';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoaded, isAuthenticated } = useConvexAuth();
+  const { t } = useLanguage();
 
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212]">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">{t('common.loading')}</div>
       </div>
     );
   }
@@ -32,11 +33,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { isLoaded } = useConvexAuth();
+  const { t } = useLanguage();
 
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212]">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">{t('common.loading')}</div>
       </div>
     );
   }
@@ -48,13 +50,12 @@ function App() {
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Navigate to="/signin" replace />} />
           <Route path="/app-login" element={<AppLogin />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route path="/" element={
             <>
               <NavBar />
               <main>
                 <HeroSection />
-                <FAQSection />
-                <SelfHostSection />
               </main>
               <Footer />
             </>

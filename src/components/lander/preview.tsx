@@ -1,9 +1,11 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { useHalloween } from '../../providers/halloween-provider';
+import { useLanguage } from '../../providers/language-provider';
 
 const Preview: React.FC = () => {
     const { isHalloweenMode } = useHalloween();
+    const { t } = useLanguage();
 
     return (
         <section className="px-4 -mt-20 sm:-mt-24 md:-mt-28 lg:-mt-32">
@@ -16,7 +18,7 @@ const Preview: React.FC = () => {
                     <div className="w-full lg:w-1/2 mb-8 lg:mb-0 pr-0 lg:pr-8">
                         <h2 className={`text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 
                             ${isHalloweenMode ? 'text-halloween-orange' : 'text-text dark:text-text-dark'}`}>
-                            {isHalloweenMode ? 'The haunted tape for your brain' : 'The duct tape for your brain'}
+                            {isHalloweenMode ? t('preview.title.halloween') : t('preview.title')}
                             <img
                                 src={"/duct-tape.png"}
                                 alt="Tape for your brain"
@@ -25,14 +27,14 @@ const Preview: React.FC = () => {
                         </h2>
                         <p className={`text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 opacity-80
                             ${isHalloweenMode ? 'text-halloween-ghost' : 'text-text dark:text-text-dark'}`}>
-                            {isHalloweenMode ? 'Who needs a memory when you have ghostly notes?' : 'Who needs a photographic memory?'}
+                            {isHalloweenMode ? t('preview.description.halloween') : t('preview.description')}
                         </p>
                         <Button
                             onClick={() => window.location.href = '/signin'}
                             className={`text-base sm:text-lg lg:text-xl px-4 sm:px-6 lg:px-8 py-2 sm:py-3
                                 ${isHalloweenMode ? 'bg-halloween-orange hover:bg-halloween-purple text-white' : ''}`}
                         >
-                            {isHalloweenMode ? 'Summon Your Notes!' : 'Stick It to Chaos!'}
+                            {isHalloweenMode ? t('preview.button.halloween') : t('preview.button')}
                         </Button>
                     </div>
                     <div className={`relative w-full aspect-square rounded-2xl shadow-2xl overflow-hidden group

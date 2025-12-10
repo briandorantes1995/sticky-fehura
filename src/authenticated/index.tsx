@@ -8,8 +8,10 @@ import { useParams, useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
 import { useApiAuth } from '../hooks/useApiAuth';
+import { useLanguage } from '../providers/language-provider';
 
 const AuthenticatedApp: React.FC = () => {
+  const { t } = useLanguage();
   const [boardId, setBoardId] = useState<Id<"boards"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { token } = useApiAuth();
@@ -30,7 +32,7 @@ const AuthenticatedApp: React.FC = () => {
           return;
         }
         if (sharedBoardId === null) {
-          setShareCodeError("Invalid share code. The board you're trying to access doesn't exist or has been deleted.");
+          setShareCodeError(t('common.shareCodeError'));
           setIsLoading(false);
           return;
         }
@@ -47,7 +49,7 @@ const AuthenticatedApp: React.FC = () => {
   }, [boards, sharedBoardId, shareCode, id, location.pathname]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('common.loading')}</div>;
   }
 
   return (

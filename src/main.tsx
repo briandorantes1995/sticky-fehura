@@ -8,9 +8,8 @@ import { ThemeProvider } from "./providers/theme-provider";
 import { PostHogProvider } from 'posthog-js/react'
 import { Toaster } from "./providers/toaster";
 import { HalloweenProvider } from "./providers/halloween-provider";
+import { LanguageProvider } from "./providers/language-provider";
 import HalloweenDecorations from "./components/halloween-decorations";
-import { useApiAuth } from "./hooks/useApiAuth";
-import { getAuthToken } from "./lib/apiAuth";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -30,11 +29,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <ConvexProvider client={convex}>
         <ConvexAuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <HalloweenProvider>
-              <HalloweenDecorations />
-              <App />
-              <Toaster/>
-            </HalloweenProvider>
+            <LanguageProvider>
+              <HalloweenProvider>
+                <HalloweenDecorations />
+                <App />
+                <Toaster/>
+              </HalloweenProvider>
+            </LanguageProvider>
           </ThemeProvider>
         </ConvexAuthProvider>
       </ConvexProvider>

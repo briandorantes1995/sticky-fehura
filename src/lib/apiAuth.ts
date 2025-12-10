@@ -210,16 +210,25 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 /**
  * Verifica el token con el servidor
+ * Nota: Este endpoint puede no existir en todas las APIs, así que si falla, usa datos locales
  */
 export async function verifyToken(): Promise<ApiUser | null> {
   const token = getAuthToken();
   if (!token) return null;
 
+  // Verificar que el token no esté expirado localmente
+  if (!hasValidToken()) {
+    clearAuthToken();
+    return null;
+  }
+
+  // Si no hay API configurada, usar datos locales
   if (!API_BASE_URL) {
-    // Si no hay API configurada, usar datos locales
     return getUserData();
   }
 
+  // Intentar verificar con el servidor (si el endpoint existe)
+  // Si no existe, simplemente usar datos locales
   try {
     const response = await fetch(`${API_BASE_URL}/auth/verify`, {
       method: 'GET',
@@ -228,9 +237,19 @@ export async function verifyToken(): Promise<ApiUser | null> {
       },
     });
 
+    // Si el endpoint no existe (404), usar datos locales
+    if (response.status === 404) {
+      return getUserData();
+    }
+
     if (!response.ok) {
-      clearAuthToken();
-      return null;
+      // Si hay un error de autenticación (401, 403), limpiar token
+      if (response.status === 401 || response.status === 403) {
+        clearAuthToken();
+        return null;
+      }
+      // Para otros errores, usar datos locales
+      return getUserData();
     }
 
     const data = await response.json();
@@ -239,9 +258,10 @@ export async function verifyToken(): Promise<ApiUser | null> {
       return data.user;
     }
 
-    return null;
-  } catch {
-    // Si falla la verificación, usar datos locales
+    return getUserData();
+  } catch (error) {
+    // Si falla la verificación (endpoint no existe, error de red, etc.), usar datos locales
+    // El token ya fue validado cuando se hizo el login, así que es seguro usar datos locales
     return getUserData();
   }
 }
@@ -251,5 +271,101 @@ export async function verifyToken(): Promise<ApiUser | null> {
  */
 export function logout(): void {
   clearAuthToken();
+}
+
+/**
+ * Inicia el flujo de OAuth (Google, Azure)
+ * Retorna la URL a la que debe redirigir el usuario
+ */
+export async function oauthLogin(provider: 'google' | 'azure', redirectTo?: string): Promise<string> {
+  if (!API_BASE_URL) {
+    throw new Error('API_BASE_URL no está configurado');
+  }
+
+  // Construir la URL de callback
+  const callbackUrl = redirectTo || `${window.location.origin}/oauth-callback`;
+
+  const response = await fetch(`${API_BASE_URL}/auth/oauth-login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      provider,
+      redirectTo: callbackUrl,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Error al iniciar OAuth' }));
+    throw new Error(error.message || 'Error al iniciar OAuth');
+  }
+
+  const data = await response.json();
+  
+  if (!data.url) {
+    throw new Error('Respuesta inválida del servidor');
+  }
+
+  return data.url;
+}
+
+/**
+ * Intercambia el token de Supabase por el token propio de la aplicación
+ * Similar al exchangeTokenThunk de tu web
+ */
+export async function exchangeToken(accessToken: string): Promise<{
+  token: { accessToken: string; refreshToken: string } | null;
+  user: ApiUser | null;
+  exists: boolean;
+  complete: boolean;
+  userId: string;
+}> {
+  if (!API_BASE_URL) {
+    throw new Error('API_BASE_URL no está configurado');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/auth/exchange-token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ accessToken }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Error intercambiando token' }));
+    throw new Error(error.message || 'Error intercambiando token');
+  }
+
+  const data = await response.json();
+
+  // Si el usuario existe y está completo, almacenar el token y usuario
+  if (data.exists && data.complete && data.token && data.user) {
+    const accessToken = typeof data.token === 'string' 
+      ? data.token 
+      : data.token?.accessToken || data.token;
+    const refreshToken = data.token?.refreshToken || null;
+
+    // Almacenar token y usuario
+    setAuthToken(accessToken);
+    setUserData(data.user);
+
+    // Actualizar Redux persist
+    try {
+      const persistData = {
+        accessToken,
+        refreshToken,
+        user: data.user,
+        loading: false
+      };
+      
+      localStorage.setItem(REDUX_PERSIST_KEY, JSON.stringify(persistData));
+    } catch (e) {
+      console.warn('Error actualizando Redux persist:', e);
+    }
+  }
+
+  return data;
 }
 
