@@ -40,11 +40,20 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
         if (!token) return;
         const existingNotes = localStore.getQuery(api.notes.getNotes, { token, boardId: actualBoardId }) || [];
         // Usar el tempId del ref si está disponible, sino generar uno nuevo
-        const tempId = lastCreatedTempIdRef.current || (`temp_${Date.now()}` as Id<"notes">);
+        const tempId: Id<"notes"> = lastCreatedTempIdRef.current || (`temp_${Date.now()}` as Id<"notes">);
         const now = Date.now();
         // Extraer solo los campos de la nota, excluyendo token y boardId
         const { token: _, boardId: __, ...noteData } = args;
-        const newNote = {
+        const newNote: {
+            _id: Id<"notes">;
+            _creationTime: number;
+            boardId: Id<"boards">;
+            content: string;
+            color: string;
+            position: { x: number; y: number };
+            size: { width: number; height: number };
+            zIndex: number;
+        } = {
             _id: tempId,
             _creationTime: now,
             boardId: args.boardId,
@@ -132,7 +141,7 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
     const boardRef = useRef<HTMLDivElement>(null);
     const [currentTool, setCurrentTool] = useState<'note' | null>(null);
     const { activeUsers, updateCursorPosition } = usePresence(boardId, isShared);
-    const lastCreatedTempIdRef = useRef<Id<"notes"> | 'tempId' | null>(null);
+    const lastCreatedTempIdRef = useRef<Id<"notes"> | null>(null);
 
     const useStableColorAssignment = (activeUsers: any[] | undefined) => {
         const colorAssignments = useRef(new Map<Id<"users">, string>());
