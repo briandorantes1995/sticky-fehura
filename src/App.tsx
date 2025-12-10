@@ -13,6 +13,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { useLanguage } from './providers/language-provider';
 import { useEffect, useState } from 'react';
 import { getAuthToken, getUserData, hasValidToken, setAuthToken, setUserData } from './lib/apiAuth';
+import HalloweenDecorations from './components/halloween-decorations';
+import ChristmasDecorations from './components/christmas-decorations';
+import SpringDecorations from './components/spring-decorations';
 
 // Componente que verifica la sesión y redirige si es necesario
 function AuthChecker({ children }: { children: React.ReactNode }) {
@@ -171,6 +174,9 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <HalloweenDecorations />
+        <ChristmasDecorations />
+        <SpringDecorations />
         <AuthChecker>
           <Routes>
             <Route path="/signin" element={<Signin />} />

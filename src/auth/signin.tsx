@@ -7,7 +7,7 @@ import Input from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { useLanguage } from "../providers/language-provider";
 import { Chrome, Building2 } from "lucide-react";
-import posthog from "posthog-js";
+import { usePostHog } from 'posthog-js/react';
 
 function Signin() {
     const { t } = useLanguage();
@@ -19,6 +19,7 @@ function Signin() {
     const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
     const navigate = useNavigate();
     const { isAuthenticated, isLoaded } = useApiAuth();
+    const posthog = usePostHog();
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -29,8 +30,10 @@ function Signin() {
     }, []);
 
     useEffect(() => {
-        posthog.capture('signin page', { property: 'visit' });
-    }, []);
+        if (posthog) {
+            posthog.capture('signin page', { property: 'visit' });
+        }
+    }, [posthog]);
 
     // Si ya está autenticado, redirigir
     useEffect(() => {

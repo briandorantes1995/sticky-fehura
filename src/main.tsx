@@ -11,14 +11,14 @@ import { HalloweenProvider } from "./providers/halloween-provider";
 import { ChristmasProvider } from "./providers/christmas-provider";
 import { SpringProvider } from "./providers/spring-provider";
 import { LanguageProvider } from "./providers/language-provider";
-import HalloweenDecorations from "./components/halloween-decorations";
-import ChristmasDecorations from "./components/christmas-decorations";
-import SpringDecorations from "./components/spring-decorations";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 const options = {
   api_host: import.meta.env.VITE_POSTHOG_API_HOST,
+  loaded: (posthog: any) => {
+    if (import.meta.env.DEV) console.log('PostHog loaded');
+  },
 }
 
 function ConvexAuthProvider({ children }: { children: React.ReactNode }) {
@@ -37,9 +37,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <HalloweenProvider>
                 <ChristmasProvider>
                   <SpringProvider>
-                    <HalloweenDecorations />
-                    <ChristmasDecorations />
-                    <SpringDecorations />
                     <App />
                     <Toaster/>
                   </SpringProvider>
