@@ -55,6 +55,37 @@ export function setAuthToken(token: string): void {
  * Redux persist guarda cada slice por separado, así que persist:auth contiene directamente el estado del slice auth
  */
 export function getAuthToken(): string | null {
+  // Debug: Listar todas las claves de localStorage que contengan 'persist' o 'auth'
+  try {
+    const allKeys = Object.keys(localStorage);
+    const relevantKeys = allKeys.filter(key => 
+      key.toLowerCase().includes('persist') || 
+      key.toLowerCase().includes('auth') ||
+      key.toLowerCase().includes('token') ||
+      key.toLowerCase().includes('user')
+    );
+    console.log('🔑 Claves relevantes en localStorage:', relevantKeys);
+    
+    // Intentar leer de diferentes posibles claves
+    const possibleKeys = [
+      REDUX_PERSIST_KEY,
+      'persist:auth',
+      'persist:root',
+      'auth',
+      'authState',
+      'reduxPersist:auth'
+    ];
+    
+    for (const key of possibleKeys) {
+      const value = localStorage.getItem(key);
+      if (value) {
+        console.log(`📦 Encontrado en clave "${key}":`, value.substring(0, 200) + '...');
+      }
+    }
+  } catch (e) {
+    console.warn('Error listando localStorage:', e);
+  }
+
   // Primero intentar leer de Redux persist (compatible con tu web principal)
   try {
     const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
@@ -65,22 +96,35 @@ export function getAuthToken(): string | null {
       console.log('📦 Redux persist parsed:', {
         hasAccessToken: !!parsed.accessToken,
         accessTokenType: typeof parsed.accessToken,
-        accessTokenValue: parsed.accessToken ? (typeof parsed.accessToken === 'string' ? parsed.accessToken.substring(0, 50) + '...' : parsed.accessToken) : null,
+        accessTokenPreview: parsed.accessToken ? (typeof parsed.accessToken === 'string' ? parsed.accessToken.substring(0, 50) + '...' : 'not a string') : null,
         keys: Object.keys(parsed)
       });
       
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
       // Leemos el accessToken tal cual Redux lo guarda (puede venir como string JSON escapado)
       if (parsed.accessToken) {
+        let token = parsed.accessToken;
+        
         // Si viene como string JSON escapado (formato de Redux persist), parsearlo
-        // Si ya es un string normal, usarlo directamente
-        if (typeof parsed.accessToken === 'string' && parsed.accessToken.startsWith('"') && parsed.accessToken.endsWith('"')) {
-          const unescaped = JSON.parse(parsed.accessToken);
-          console.log('✅ Token des-escaped:', unescaped.substring(0, 30) + '...');
-          return unescaped;
+        // Ejemplo: "\"eyJhbGci...\"" -> "eyJhbGci..."
+        if (typeof token === 'string') {
+          // Verificar si empieza y termina con comillas dobles escapadas
+          if (token.startsWith('"') && token.endsWith('"') && token.length > 2) {
+            try {
+              token = JSON.parse(token);
+              console.log('✅ Token des-escaped:', token.substring(0, 30) + '...');
+            } catch (e) {
+              console.warn('⚠️ Error parseando token escapado:', e);
+              // Si falla, intentar remover las comillas manualmente
+              if (token.startsWith('"') && token.endsWith('"')) {
+                token = token.slice(1, -1);
+              }
+            }
+          }
         }
-        console.log('✅ Token directo:', parsed.accessToken.substring(0, 30) + '...');
-        return parsed.accessToken;
+        
+        console.log('✅ Token final:', token ? token.substring(0, 30) + '...' : 'null');
+        return token;
       }
     }
   } catch (e) {
@@ -136,15 +180,15 @@ export function getUserData(): ApiUser | null {
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
       if (parsed.user) {
         // Si viene como string JSON escapado (formato de Redux persist), parsearlo
-        // Si ya es un objeto, usarlo directamente
+        // Ejemplo: "{\"id\":\"...\"}" -> {id: "..."}
         let user = parsed.user;
         if (typeof user === 'string') {
           try {
             user = JSON.parse(user);
-            console.log('✅ User des-escaped');
-          } catch {
+            console.log('✅ User des-escaped:', { id: user.id, email: user.email });
+          } catch (e) {
             // Si falla el parse, el user no es un JSON válido
-            console.warn('❌ Error parseando user string');
+            console.warn('❌ Error parseando user string:', e);
             return null;
           }
         }
