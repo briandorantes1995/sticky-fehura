@@ -58,25 +58,39 @@ export function getAuthToken(): string | null {
   // Primero intentar leer de Redux persist (compatible con tu web principal)
   try {
     const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
+    console.log('📦 Redux persist raw:', reduxPersist ? reduxPersist.substring(0, 200) + '...' : 'null');
+    
     if (reduxPersist) {
       const parsed = JSON.parse(reduxPersist);
+      console.log('📦 Redux persist parsed:', {
+        hasAccessToken: !!parsed.accessToken,
+        accessTokenType: typeof parsed.accessToken,
+        accessTokenValue: parsed.accessToken ? (typeof parsed.accessToken === 'string' ? parsed.accessToken.substring(0, 50) + '...' : parsed.accessToken) : null,
+        keys: Object.keys(parsed)
+      });
+      
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
       // Leemos el accessToken tal cual Redux lo guarda (puede venir como string JSON escapado)
       if (parsed.accessToken) {
         // Si viene como string JSON escapado (formato de Redux persist), parsearlo
         // Si ya es un string normal, usarlo directamente
         if (typeof parsed.accessToken === 'string' && parsed.accessToken.startsWith('"') && parsed.accessToken.endsWith('"')) {
-          return JSON.parse(parsed.accessToken);
+          const unescaped = JSON.parse(parsed.accessToken);
+          console.log('✅ Token des-escaped:', unescaped.substring(0, 30) + '...');
+          return unescaped;
         }
+        console.log('✅ Token directo:', parsed.accessToken.substring(0, 30) + '...');
         return parsed.accessToken;
       }
     }
   } catch (e) {
-    console.warn('Error leyendo Redux persist:', e);
+    console.warn('❌ Error leyendo Redux persist:', e);
   }
 
   // Fallback a localStorage normal
-  return localStorage.getItem(TOKEN_KEY);
+  const fallbackToken = localStorage.getItem(TOKEN_KEY);
+  console.log('📦 Fallback token:', fallbackToken ? fallbackToken.substring(0, 30) + '...' : 'null');
+  return fallbackToken;
 }
 
 /**
@@ -113,6 +127,12 @@ export function getUserData(): ApiUser | null {
     const reduxPersist = localStorage.getItem(REDUX_PERSIST_KEY);
     if (reduxPersist) {
       const parsed = JSON.parse(reduxPersist);
+      console.log('👤 Redux persist user:', {
+        hasUser: !!parsed.user,
+        userType: typeof parsed.user,
+        userKeys: parsed.user && typeof parsed.user === 'object' ? Object.keys(parsed.user) : null
+      });
+      
       // Redux persist guarda el slice directamente: { user, accessToken, refreshToken, loading }
       if (parsed.user) {
         // Si viene como string JSON escapado (formato de Redux persist), parsearlo
@@ -121,8 +141,10 @@ export function getUserData(): ApiUser | null {
         if (typeof user === 'string') {
           try {
             user = JSON.parse(user);
+            console.log('✅ User des-escaped');
           } catch {
             // Si falla el parse, el user no es un JSON válido
+            console.warn('❌ Error parseando user string');
             return null;
           }
         }
@@ -130,15 +152,17 @@ export function getUserData(): ApiUser | null {
         if (user.roles && !Array.isArray(user.roles)) {
           user.roles = [user.roles];
         }
+        console.log('✅ User encontrado:', { id: user.id, email: user.email });
         return user;
       }
     }
   } catch (e) {
-    console.warn('Error leyendo Redux persist:', e);
+    console.warn('❌ Error leyendo Redux persist:', e);
   }
 
   // Fallback a localStorage normal
   const userData = localStorage.getItem(USER_KEY);
+  console.log('📦 Fallback user:', userData ? 'existe' : 'null');
   if (!userData) return null;
   try {
     return JSON.parse(userData);
