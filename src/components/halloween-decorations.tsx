@@ -1,7 +1,9 @@
 import { useHalloween } from '../providers/halloween-provider';
+import { useLocation } from 'react-router-dom';
 
 const HalloweenDecorations = () => {
     const { isHalloweenMode } = useHalloween();
+    const location = useLocation();
 
     if (!isHalloweenMode) return null;
 

@@ -30,6 +30,20 @@ export default {
           black: '#1a1a1a',
           ghost: 'rgba(255, 255, 255, 0.9)',
         },
+        christmas: {
+          red: '#DC2626',
+          green: '#16A34A',
+          gold: '#F59E0B',
+          snow: 'rgba(255, 255, 255, 0.9)',
+          black: '#1a1a1a',
+        },
+        spring: {
+          pink: '#EC4899',
+          green: '#10B981',
+          yellow: '#FCD34D',
+          petal: 'rgba(255, 255, 255, 0.9)',
+          black: '#1a1a1a',
+        },
       },
       keyframes: {
         float: {
@@ -41,10 +55,30 @@ export default {
           '25%': { transform: 'rotate(-5deg)' },
           '75%': { transform: 'rotate(5deg)' },
         },
+        snowFall: {
+          '0%': { transform: 'translateY(-100vh) rotate(0deg)' },
+          '100%': { transform: 'translateY(100vh) rotate(360deg)' },
+        },
+        petalFall: {
+          '0%': { transform: 'translateY(-100vh) rotate(0deg)' },
+          '100%': { transform: 'translateY(100vh) rotate(180deg)' },
+        },
+        sparkle: {
+          '0%, 100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+          '50%': { transform: 'scale(1.1) rotate(180deg)', opacity: '0.8' },
+        },
+        bloom: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+          '50%': { transform: 'scale(1.05)', opacity: '0.9' },
+        },
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
         'spooky-shake': 'spookyShake 2s ease-in-out infinite',
+        'snow-fall': 'snowFall 10s linear infinite',
+        'petal-fall': 'petalFall 8s linear infinite',
+        'sparkle': 'sparkle 2s ease-in-out infinite',
+        'bloom': 'bloom 3s ease-in-out infinite',
       },
       borderRadius: {
         base: '20px'

@@ -8,8 +8,12 @@ import { ThemeProvider } from "./providers/theme-provider";
 import { PostHogProvider } from 'posthog-js/react'
 import { Toaster } from "./providers/toaster";
 import { HalloweenProvider } from "./providers/halloween-provider";
+import { ChristmasProvider } from "./providers/christmas-provider";
+import { SpringProvider } from "./providers/spring-provider";
 import { LanguageProvider } from "./providers/language-provider";
 import HalloweenDecorations from "./components/halloween-decorations";
+import ChristmasDecorations from "./components/christmas-decorations";
+import SpringDecorations from "./components/spring-decorations";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -31,9 +35,15 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <LanguageProvider>
               <HalloweenProvider>
-                <HalloweenDecorations />
-                <App />
-                <Toaster/>
+                <ChristmasProvider>
+                  <SpringProvider>
+                    <HalloweenDecorations />
+                    <ChristmasDecorations />
+                    <SpringDecorations />
+                    <App />
+                    <Toaster/>
+                  </SpringProvider>
+                </ChristmasProvider>
               </HalloweenProvider>
             </LanguageProvider>
           </ThemeProvider>

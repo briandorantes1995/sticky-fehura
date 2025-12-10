@@ -99,3 +99,20 @@
 .spooky-text-shadow {
     text-shadow: 2px 2px 4px rgba(255, 107, 26, 0.5);
 }
+
+.christmas-container {
+    position: fixed;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.spring-container {
+    position: fixed;
+    pointer-events: none;
+    z-index: 50;
+}
+
+@keyframes fog-roll {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
