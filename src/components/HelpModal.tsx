@@ -5,6 +5,7 @@ import Input from './ui/input';
 import { useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useToast } from '../hooks/use-toast';
+import { useApiAuth } from '../hooks/useApiAuth';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface HelpModalProps {
 const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
     const [input, setInput] = useState('');
     const [error, setError] = useState('');
+    const { token } = useApiAuth();
     const submitHelpRequest = useMutation(api.support.supportRequest);
     const { toast } = useToast();
 
@@ -28,8 +30,17 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             return;
         }
 
+        if (!token) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to submit a help request.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
-            await submitHelpRequest({ input });
+            await submitHelpRequest({ token, input });
             toast({
                 title: "Help Request Submitted",
                 description: "We've received your question and will get back to you soon!",

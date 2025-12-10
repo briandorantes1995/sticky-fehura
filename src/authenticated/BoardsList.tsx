@@ -49,24 +49,21 @@ const BoardsList: React.FC = () => {
     }, [createBoard, token, t]);
 
     const handleDeleteBoard = useCallback(async (boardId: Id<"boards">) => {
-        if (!token) return;
-        await deleteBoard({ token, boardId });
-    }, [deleteBoard, token]);
+        await deleteBoard({ boardId });
+    }, [deleteBoard]);
 
     const handleEditBoard = useCallback(async (boardId: Id<"boards">, newName: string) => {
-        if (!token || newName.trim() === '') return;
-        await updateBoard({ token, boardId, name: newName });
-    }, [updateBoard, token]);
+        if (newName.trim() === '') return;
+        await updateBoard({ boardId, name: newName });
+    }, [updateBoard]);
 
     const handleRestoreBoard = useCallback(async (boardId: Id<"boards">) => {
-        if (!token) return;
-        await restoreBoard({ token, boardId });
-    }, [restoreBoard, token]);
+        await restoreBoard({ boardId });
+    }, [restoreBoard]);
 
     const handlePermanentlyDeleteBoard = useCallback(async (boardId: Id<"boards">) => {
-        if (!token) return;
-        await permanentlyDeleteBoard({ token, boardId });
-    }, [permanentlyDeleteBoard, token]);
+        await permanentlyDeleteBoard({ boardId });
+    }, [permanentlyDeleteBoard]);
 
     const handleSortChange = useCallback((option: string) => {
         // Mapear las traducciones de vuelta a los valores originales
@@ -119,7 +116,9 @@ const BoardsList: React.FC = () => {
                             <Button
                                 onClick={async () => {
                                     const boardId = await handleCreateBoard();
-                                    setNewBoardId(boardId);
+                                    if (boardId) {
+                                        setNewBoardId(boardId);
+                                    }
                                 }}
                                 size="sm"
                                 className={`flex items-center ${isHalloweenMode

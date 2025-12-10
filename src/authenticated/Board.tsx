@@ -37,22 +37,25 @@ const Whiteboard: React.FC<WhiteboardProps> = ({ boardId }) => {
     const [error, setError] = useState<string | null>(null);
     const notes = useQuery(api.notes.getNotes, token ? { token, boardId: actualBoardId } : "skip");
     const createNote = useMutation(api.notes.createNote).withOptimisticUpdate((localStore, args) => {
-        const existingNotes = localStore.getQuery(api.notes.getNotes, { boardId: actualBoardId }) || [];
+        if (!token) return;
+        const existingNotes = localStore.getQuery(api.notes.getNotes, { token, boardId: actualBoardId }) || [];
         const tempId = `temp_${Date.now()}` as Id<"notes">;
         const now = Date.now();
-        localStore.setQuery(api.notes.getNotes, { boardId: actualBoardId }, [...existingNotes, { _id: tempId, _creationTime: now, ...args }]);
+        localStore.setQuery(api.notes.getNotes, { token, boardId: actualBoardId }, [...existingNotes, { _id: tempId, _creationTime: now, ...args }]);
     });
     const updateNote = useMutation(api.notes.updateNote).withOptimisticUpdate((localStore, args) => {
-        const existingNotes = localStore.getQuery(api.notes.getNotes, { boardId: actualBoardId }) || [];
+        if (!token) return;
+        const existingNotes = localStore.getQuery(api.notes.getNotes, { token, boardId: actualBoardId }) || [];
         const updatedNotes = existingNotes.map(note =>
             note._id === args.noteId ? { ...note, ...args } : note
         );
-        localStore.setQuery(api.notes.getNotes, { boardId: actualBoardId }, updatedNotes);
+        localStore.setQuery(api.notes.getNotes, { token, boardId: actualBoardId }, updatedNotes);
     });
     const deleteNote = useMutation(api.notes.deleteNote).withOptimisticUpdate((localStore, args) => {
-        const existingNotes = localStore.getQuery(api.notes.getNotes, { boardId: actualBoardId }) || [];
+        if (!token) return;
+        const existingNotes = localStore.getQuery(api.notes.getNotes, { token, boardId: actualBoardId }) || [];
         const updatedNotes = existingNotes.filter(note => note._id !== args.noteId);
-        localStore.setQuery(api.notes.getNotes, { boardId: actualBoardId }, updatedNotes);
+        localStore.setQuery(api.notes.getNotes, { token, boardId: actualBoardId }, updatedNotes);
     });
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [shareLink, setShareLink] = useState('');
